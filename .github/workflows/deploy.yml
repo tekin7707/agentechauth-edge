@@ -25,20 +25,19 @@ jobs:
             mkdir -p /home/deploy/hetzner01/edge/logs
             docker network inspect edge_web >/dev/null 2>&1 || docker network create edge_web
 
-      - name: Sync repository to VPS
+      - name: Sync runtime files to VPS
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT }}
-          source: "."
+          source: "docker-compose.yml,nginx"
           target: "/home/deploy/hetzner01/edge"
           rm: false
           overwrite: true
           strip_components: 0
           tar_dereference: true
-          exclude: ".git,.github"
 
       - name: SSH to VPS and deploy
         uses: appleboy/ssh-action@v1.0.3
@@ -51,6 +50,7 @@ jobs:
             set -e
 
             cd /home/deploy/hetzner01/edge
+            rm -rf .git
 
             cp /etc/letsencrypt/live/agentechauth.com/fullchain.pem ./certs/agentechauth.com/fullchain.pem
             cp /etc/letsencrypt/live/agentechauth.com/privkey.pem ./certs/agentechauth.com/privkey.pem
