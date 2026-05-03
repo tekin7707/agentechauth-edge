@@ -52,8 +52,19 @@ jobs:
             cd /home/deploy/hetzner01/edge
             rm -rf .git
 
-            cp /etc/letsencrypt/live/agentechauth.com/fullchain.pem ./certs/agentechauth.com/fullchain.pem
-            cp /etc/letsencrypt/live/agentechauth.com/privkey.pem ./certs/agentechauth.com/privkey.pem
+            CERT_SOURCE_DIR="/home/deploy/app/nginx/certs/agentechauth.com"
+
+            if [ -r "$CERT_SOURCE_DIR/fullchain.pem" ] && [ -r "$CERT_SOURCE_DIR/privkey.pem" ]; then
+              cp "$CERT_SOURCE_DIR/fullchain.pem" ./certs/agentechauth.com/fullchain.pem
+              cp "$CERT_SOURCE_DIR/privkey.pem" ./certs/agentechauth.com/privkey.pem
+            elif [ -r /etc/letsencrypt/live/agentechauth.com/fullchain.pem ] && [ -r /etc/letsencrypt/live/agentechauth.com/privkey.pem ]; then
+              cp /etc/letsencrypt/live/agentechauth.com/fullchain.pem ./certs/agentechauth.com/fullchain.pem
+              cp /etc/letsencrypt/live/agentechauth.com/privkey.pem ./certs/agentechauth.com/privkey.pem
+            else
+              echo "Readable certificate source not found for agentechauth.com" >&2
+              exit 1
+            fi
+
             chmod 644 ./certs/agentechauth.com/fullchain.pem
             chmod 600 ./certs/agentechauth.com/privkey.pem
 
