@@ -52,16 +52,19 @@ jobs:
             cd /home/deploy/hetzner01/edge
             rm -rf .git
 
-            CERT_SOURCE_DIR="/home/deploy/app/nginx/certs/agentechauth.com"
+            EXISTING_CERT_DIR="/home/deploy/hetzner01/edge/certs/agentechauth.com"
+            LEGACY_CERT_DIR="/home/deploy/app/nginx/certs/agentechauth.com"
 
-            if [ -r "$CERT_SOURCE_DIR/fullchain.pem" ] && [ -r "$CERT_SOURCE_DIR/privkey.pem" ]; then
-              cp "$CERT_SOURCE_DIR/fullchain.pem" ./certs/agentechauth.com/fullchain.pem
-              cp "$CERT_SOURCE_DIR/privkey.pem" ./certs/agentechauth.com/privkey.pem
+            if [ -r "$EXISTING_CERT_DIR/fullchain.pem" ] && [ -r "$EXISTING_CERT_DIR/privkey.pem" ]; then
+              echo "Using existing certificates from $EXISTING_CERT_DIR"
+            elif [ -r "$LEGACY_CERT_DIR/fullchain.pem" ] && [ -r "$LEGACY_CERT_DIR/privkey.pem" ]; then
+              cp "$LEGACY_CERT_DIR/fullchain.pem" ./certs/agentechauth.com/fullchain.pem
+              cp "$LEGACY_CERT_DIR/privkey.pem" ./certs/agentechauth.com/privkey.pem
             elif [ -r /etc/letsencrypt/live/agentechauth.com/fullchain.pem ] && [ -r /etc/letsencrypt/live/agentechauth.com/privkey.pem ]; then
               cp /etc/letsencrypt/live/agentechauth.com/fullchain.pem ./certs/agentechauth.com/fullchain.pem
               cp /etc/letsencrypt/live/agentechauth.com/privkey.pem ./certs/agentechauth.com/privkey.pem
             else
-              echo "Readable certificate source not found for agentechauth.com" >&2
+              echo "Readable certificate source not found for agentechauth.com; bootstrap /home/deploy/hetzner01/edge/certs/agentechauth.com manually once" >&2
               exit 1
             fi
 
