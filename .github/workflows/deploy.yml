@@ -1,0 +1,49 @@
+name: Deploy Edge to VPS
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: SSH to VPS and deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            set -e
+
+            TARGET_DIR="/home/deploy/hetzner01/edge"
+
+            mkdir -p "$TARGET_DIR"
+            mkdir -p "$TARGET_DIR/nginx/conf.d"
+            mkdir -p "$TARGET_DIR/certs/agentechauth.com"
+            mkdir -p "$TARGET_DIR/logs"
+            docker network inspect edge_web >/dev/null 2>&1 || docker network create edge_web
+
+            if [ ! -d "$TARGET_DIR/.git" ]; then
+              cd "$TARGET_DIR"
+              git init
+              git remote add origin https://github.com/tekin7707/agentechauth-edge.git
+            else
+              cd "$TARGET_DIR"
+            fi
+
+            git fetch origin
+            git checkout main
+            git pull origin main
+
+            cp /etc/letsencrypt/live/agentechauth.com/fullchain.pem ./certs/agentechauth.com/fullchain.pem
+            cp /etc/letsencrypt/live/agentechauth.com/privkey.pem ./certs/agentechauth.com/privkey.pem
+            chmod 644 ./certs/agentechauth.com/fullchain.pem
+            chmod 600 ./certs/agentechauth.com/privkey.pem
+
+            EDGE_NETWORK_NAME=edge_web docker compose up -d --build
