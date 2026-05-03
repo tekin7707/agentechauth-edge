@@ -8,6 +8,38 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Ensure target directories exist
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            set -e
+            mkdir -p /home/deploy/hetzner01/edge/nginx/conf.d
+            mkdir -p /home/deploy/hetzner01/edge/certs/agentechauth.com
+            mkdir -p /home/deploy/hetzner01/edge/logs
+            docker network inspect edge_web >/dev/null 2>&1 || docker network create edge_web
+
+      - name: Sync repository to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          source: "."
+          target: "/home/deploy/hetzner01/edge"
+          rm: false
+          overwrite: true
+          strip_components: 0
+          tar_dereference: true
+          exclude: ".git,.github"
+
       - name: SSH to VPS and deploy
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -18,25 +50,7 @@ jobs:
           script: |
             set -e
 
-            TARGET_DIR="/home/deploy/hetzner01/edge"
-
-            mkdir -p "$TARGET_DIR"
-            mkdir -p "$TARGET_DIR/nginx/conf.d"
-            mkdir -p "$TARGET_DIR/certs/agentechauth.com"
-            mkdir -p "$TARGET_DIR/logs"
-            docker network inspect edge_web >/dev/null 2>&1 || docker network create edge_web
-
-            if [ ! -d "$TARGET_DIR/.git" ]; then
-              cd "$TARGET_DIR"
-              git init
-              git remote add origin https://github.com/tekin7707/agentechauth-edge.git
-            else
-              cd "$TARGET_DIR"
-            fi
-
-            git fetch origin
-            git checkout main
-            git pull origin main
+            cd /home/deploy/hetzner01/edge
 
             cp /etc/letsencrypt/live/agentechauth.com/fullchain.pem ./certs/agentechauth.com/fullchain.pem
             cp /etc/letsencrypt/live/agentechauth.com/privkey.pem ./certs/agentechauth.com/privkey.pem
