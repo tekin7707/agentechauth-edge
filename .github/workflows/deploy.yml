@@ -22,6 +22,7 @@ jobs:
             set -e
             mkdir -p /home/deploy/hetzner01/edge/nginx/conf.d
             mkdir -p /home/deploy/hetzner01/edge/certs/agentechauth.com
+            mkdir -p /home/deploy/hetzner01/edge/certs/cwisely.com
             mkdir -p /home/deploy/hetzner01/edge/logs
             docker network inspect edge_web >/dev/null 2>&1 || docker network create edge_web
 
@@ -70,5 +71,25 @@ jobs:
 
             chmod 644 ./certs/agentechauth.com/fullchain.pem
             chmod 600 ./certs/agentechauth.com/privkey.pem
+
+            CWISELY_CERT_DIR="/home/deploy/hetzner01/edge/certs/cwisely.com"
+
+            if [ -r "$CWISELY_CERT_DIR/fullchain.pem" ] && [ -r "$CWISELY_CERT_DIR/privkey.pem" ]; then
+              echo "Using existing certificates from $CWISELY_CERT_DIR"
+            elif [ -r /etc/letsencrypt/live/cwisely.com/fullchain.pem ] && [ -r /etc/letsencrypt/live/cwisely.com/privkey.pem ]; then
+              cp /etc/letsencrypt/live/cwisely.com/fullchain.pem ./certs/cwisely.com/fullchain.pem
+              cp /etc/letsencrypt/live/cwisely.com/privkey.pem ./certs/cwisely.com/privkey.pem
+            else
+              echo "Readable certificate source not found for cwisely.com; bootstrap /home/deploy/hetzner01/edge/certs/cwisely.com manually once" >&2
+              exit 1
+            fi
+
+            chmod 644 ./certs/cwisely.com/fullchain.pem
+            chmod 600 ./certs/cwisely.com/privkey.pem
+
+            docker run --rm \
+              -v "$PWD/nginx/conf.d:/etc/nginx/conf.d:ro" \
+              -v "$PWD/certs:/etc/nginx/certs:ro" \
+              nginx:alpine nginx -t
 
             EDGE_NETWORK_NAME=edge_web docker compose up -d --build
