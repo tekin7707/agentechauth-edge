@@ -23,6 +23,7 @@ jobs:
             mkdir -p /home/deploy/hetzner01/edge/nginx/conf.d
             mkdir -p /home/deploy/hetzner01/edge/certs/agentechauth.com
             mkdir -p /home/deploy/hetzner01/edge/certs/cwisely.com
+            mkdir -p /home/deploy/hetzner01/edge/certs/futorya.com
             mkdir -p /home/deploy/hetzner01/edge/logs
             docker network inspect edge_web >/dev/null 2>&1 || docker network create edge_web
 
@@ -86,6 +87,21 @@ jobs:
 
             chmod 644 ./certs/cwisely.com/fullchain.pem
             chmod 600 ./certs/cwisely.com/privkey.pem
+
+            FUTORYA_CERT_DIR="/home/deploy/hetzner01/edge/certs/futorya.com"
+
+            if [ -r "$FUTORYA_CERT_DIR/fullchain.pem" ] && [ -r "$FUTORYA_CERT_DIR/privkey.pem" ]; then
+              echo "Using existing certificates from $FUTORYA_CERT_DIR"
+            elif [ -r /etc/letsencrypt/live/futorya.com/fullchain.pem ] && [ -r /etc/letsencrypt/live/futorya.com/privkey.pem ]; then
+              cp /etc/letsencrypt/live/futorya.com/fullchain.pem ./certs/futorya.com/fullchain.pem
+              cp /etc/letsencrypt/live/futorya.com/privkey.pem ./certs/futorya.com/privkey.pem
+            else
+              echo "Readable certificate source not found for futorya.com; bootstrap /home/deploy/hetzner01/edge/certs/futorya.com manually once" >&2
+              exit 1
+            fi
+
+            chmod 644 ./certs/futorya.com/fullchain.pem
+            chmod 600 ./certs/futorya.com/privkey.pem
 
             docker run --rm \
               -v "$PWD/nginx/conf.d:/etc/nginx/conf.d:ro" \
