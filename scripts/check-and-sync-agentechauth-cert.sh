@@ -4,6 +4,7 @@ set -euo pipefail
 
 LETSENCRYPT_DIR="${LETSENCRYPT_DIR:-/etc/letsencrypt/live/agentechauth.com}"
 EDGE_CERT_DIR="${EDGE_CERT_DIR:-/home/deploy/hetzner01/edge/certs/agentechauth.com}"
+EDGE_ROOT="${EDGE_ROOT:-/home/deploy/hetzner01/edge}"
 
 mkdir -p "$EDGE_CERT_DIR"
 
@@ -15,16 +16,16 @@ fi
 echo "Certificate SAN entries:"
 openssl x509 -in "$LETSENCRYPT_DIR/fullchain.pem" -noout -text | grep "DNS:"
 
-cp "$LETSENCRYPT_DIR/fullchain.pem" "$EDGE_CERT_DIR/fullchain.pem"
-cp "$LETSENCRYPT_DIR/privkey.pem" "$EDGE_CERT_DIR/privkey.pem"
+install -m 644 "$LETSENCRYPT_DIR/fullchain.pem" "$EDGE_CERT_DIR/fullchain.pem.next"
+install -m 600 "$LETSENCRYPT_DIR/privkey.pem" "$EDGE_CERT_DIR/privkey.pem.next"
+mv "$EDGE_CERT_DIR/fullchain.pem.next" "$EDGE_CERT_DIR/fullchain.pem"
+mv "$EDGE_CERT_DIR/privkey.pem.next" "$EDGE_CERT_DIR/privkey.pem"
 
 chmod 644 "$EDGE_CERT_DIR/fullchain.pem"
 chmod 600 "$EDGE_CERT_DIR/privkey.pem"
 
-cat <<EOF
-Certificate copied to:
-  $EDGE_CERT_DIR/fullchain.pem
-  $EDGE_CERT_DIR/privkey.pem
+cd "$EDGE_ROOT"
+docker compose exec -T nginx nginx -t
+docker compose exec -T nginx nginx -s reload
 
-If 'fiload.agentechauth.com' is missing from the SAN list above, renew the cert with certbot before reloading edge.
-EOF
+echo "Certificate copied and edge Nginx reloaded."
