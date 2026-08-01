@@ -12,6 +12,10 @@ One-time server setup:
 ./scripts/install-certbot-deploy-hook.sh
 ```
 
+Deploys call `prepare-edge-certificates.sh`, which synchronizes Certbot files in a
+short-lived root container. Private keys remain `root:root 600`; the unprivileged
+deploy user never needs to read or weaken them.
+
 Urgent/manual renewal (safe while Nginx is running):
 
 ```sh

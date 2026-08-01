@@ -24,6 +24,7 @@ jobs:
             mkdir -p /home/deploy/hetzner01/edge/certs/agentechauth.com
             mkdir -p /home/deploy/hetzner01/edge/certs/cwisely.com
             mkdir -p /home/deploy/hetzner01/edge/certs/futorya.com
+            mkdir -p /home/deploy/hetzner01/edge/certbot/www
             mkdir -p /home/deploy/hetzner01/edge/logs
             docker network inspect edge_web >/dev/null 2>&1 || docker network create edge_web
 
@@ -53,55 +54,9 @@ jobs:
 
             cd /home/deploy/hetzner01/edge
             rm -rf .git
-
-            EXISTING_CERT_DIR="/home/deploy/hetzner01/edge/certs/agentechauth.com"
-            LEGACY_CERT_DIR="/home/deploy/app/nginx/certs/agentechauth.com"
-
-            if [ -r "$EXISTING_CERT_DIR/fullchain.pem" ] && [ -r "$EXISTING_CERT_DIR/privkey.pem" ]; then
-              echo "Using existing certificates from $EXISTING_CERT_DIR"
-            elif [ -r "$LEGACY_CERT_DIR/fullchain.pem" ] && [ -r "$LEGACY_CERT_DIR/privkey.pem" ]; then
-              cp "$LEGACY_CERT_DIR/fullchain.pem" ./certs/agentechauth.com/fullchain.pem
-              cp "$LEGACY_CERT_DIR/privkey.pem" ./certs/agentechauth.com/privkey.pem
-            elif [ -r /etc/letsencrypt/live/agentechauth.com/fullchain.pem ] && [ -r /etc/letsencrypt/live/agentechauth.com/privkey.pem ]; then
-              cp /etc/letsencrypt/live/agentechauth.com/fullchain.pem ./certs/agentechauth.com/fullchain.pem
-              cp /etc/letsencrypt/live/agentechauth.com/privkey.pem ./certs/agentechauth.com/privkey.pem
-            else
-              echo "Readable certificate source not found for agentechauth.com; bootstrap /home/deploy/hetzner01/edge/certs/agentechauth.com manually once" >&2
-              exit 1
-            fi
-
-            chmod 644 ./certs/agentechauth.com/fullchain.pem
-            chmod 600 ./certs/agentechauth.com/privkey.pem
-
-            CWISELY_CERT_DIR="/home/deploy/hetzner01/edge/certs/cwisely.com"
-
-            if [ -r "$CWISELY_CERT_DIR/fullchain.pem" ] && [ -r "$CWISELY_CERT_DIR/privkey.pem" ]; then
-              echo "Using existing certificates from $CWISELY_CERT_DIR"
-            elif [ -r /etc/letsencrypt/live/cwisely.com/fullchain.pem ] && [ -r /etc/letsencrypt/live/cwisely.com/privkey.pem ]; then
-              cp /etc/letsencrypt/live/cwisely.com/fullchain.pem ./certs/cwisely.com/fullchain.pem
-              cp /etc/letsencrypt/live/cwisely.com/privkey.pem ./certs/cwisely.com/privkey.pem
-            else
-              echo "Readable certificate source not found for cwisely.com; bootstrap /home/deploy/hetzner01/edge/certs/cwisely.com manually once" >&2
-              exit 1
-            fi
-
-            chmod 644 ./certs/cwisely.com/fullchain.pem
-            chmod 600 ./certs/cwisely.com/privkey.pem
-
-            FUTORYA_CERT_DIR="/home/deploy/hetzner01/edge/certs/futorya.com"
-
-            if [ -r "$FUTORYA_CERT_DIR/fullchain.pem" ] && [ -r "$FUTORYA_CERT_DIR/privkey.pem" ]; then
-              echo "Using existing certificates from $FUTORYA_CERT_DIR"
-            elif [ -r /etc/letsencrypt/live/futorya.com/fullchain.pem ] && [ -r /etc/letsencrypt/live/futorya.com/privkey.pem ]; then
-              cp /etc/letsencrypt/live/futorya.com/fullchain.pem ./certs/futorya.com/fullchain.pem
-              cp /etc/letsencrypt/live/futorya.com/privkey.pem ./certs/futorya.com/privkey.pem
-            else
-              echo "Readable certificate source not found for futorya.com; bootstrap /home/deploy/hetzner01/edge/certs/futorya.com manually once" >&2
-              exit 1
-            fi
-
-            chmod 644 ./certs/futorya.com/fullchain.pem
-            chmod 600 ./certs/futorya.com/privkey.pem
+            chmod +x ./scripts/*.sh
+            ./scripts/prepare-edge-certificates.sh
+            ./scripts/install-certbot-deploy-hook.sh
 
             docker run --rm \
               -v "$PWD/nginx/conf.d:/etc/nginx/conf.d:ro" \
