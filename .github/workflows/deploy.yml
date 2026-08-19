@@ -24,6 +24,7 @@ jobs:
             mkdir -p /home/deploy/hetzner01/edge/certs/agentechauth.com
             mkdir -p /home/deploy/hetzner01/edge/certs/cwisely.com
             mkdir -p /home/deploy/hetzner01/edge/certs/futorya.com
+            mkdir -p /home/deploy/hetzner01/edge/certs/provengine.com
             mkdir -p /home/deploy/hetzner01/edge/certbot/www
             mkdir -p /home/deploy/hetzner01/edge/logs
             docker network inspect edge_web >/dev/null 2>&1 || docker network create edge_web

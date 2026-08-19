@@ -1,6 +1,6 @@
 # Edge proxy
 
-## AgentechAuth certificate renewal
+## Certificate renewal
 
 Port 80 stays on Nginx. ACME HTTP-01 challenges are served from
 `certbot/www/.well-known/acme-challenge`, so Certbot must use the `webroot`
@@ -22,10 +22,10 @@ Urgent/manual renewal (safe while Nginx is running):
 ./scripts/renew-agentechauth-cert.sh --force-renewal
 ```
 
-The host Certbot timer renews `/etc/letsencrypt/live/agentechauth.com`. The deploy
-hook atomically copies the renewed certificate into `certs/agentechauth.com`,
-validates Nginx configuration, and reloads Nginx. Verify the complete renewal path
-after infrastructure changes with:
+The host Certbot timer runs the deploy hook, which atomically copies every managed
+certificate (`agentechauth.com`, `cwisely.com`, `futorya.com`, and
+`provengine.com`) into `certs/<domain>`, validates Nginx configuration, and
+reloads Nginx. Verify the complete renewal path after infrastructure changes with:
 
 ```sh
 docker run --rm \
