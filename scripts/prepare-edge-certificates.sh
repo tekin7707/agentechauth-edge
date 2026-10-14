@@ -9,6 +9,7 @@ mkdir -p \
   "$EDGE_CERT_ROOT/agentechauth.com" \
   "$EDGE_CERT_ROOT/cwisely.com" \
   "$EDGE_CERT_ROOT/futorya.com" \
+  "$EDGE_CERT_ROOT/belekvillas.com" \
   "$EDGE_CERT_ROOT/provengine.com"
 
 # Private keys produced by Certbot are intentionally root-owned and mode 600.
@@ -52,6 +53,7 @@ docker run --rm \
     prepare_cert agentechauth.com true
     prepare_cert cwisely.com true
     prepare_cert futorya.com true
+    prepare_cert belekvillas.com false
     prepare_cert provengine.com false
   '
 

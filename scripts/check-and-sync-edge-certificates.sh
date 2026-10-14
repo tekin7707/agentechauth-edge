@@ -12,7 +12,7 @@ docker run --rm \
   -v /etc/letsencrypt:/letsencrypt:ro \
   -v "$EDGE_CERT_ROOT:/edge-certs" \
   alpine:3.22 sh -eu -c '
-    for cert_name in agentechauth.com cwisely.com futorya.com provengine.com; do
+    for cert_name in agentechauth.com cwisely.com futorya.com belekvillas.com provengine.com; do
       source="/letsencrypt/live/$cert_name"
       destination="/edge-certs/$cert_name"
       if [ ! -r "$source/fullchain.pem" ] || [ ! -r "$source/privkey.pem" ]; then
